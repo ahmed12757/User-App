@@ -6,10 +6,10 @@ const FaceCapture = ({ onCapture }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const overlayRef = useRef(null);
-  const [stream, setStream] = useState(null);
+  const streamRef = useRef(null);
   const [error, setError] = useState(null);
   const [capturedImage, setCapturedImage] = useState(null);
-  const [isCapturing, setIsCapturing] = useState(false);
+  const [showFlash, setShowFlash] = useState(false);
   const [isModelLoaded, setIsModelLoaded] = useState(false);
   const [faceDetected, setFaceDetected] = useState(false);
 
@@ -32,14 +32,23 @@ const FaceCapture = ({ onCapture }) => {
     loadModels();
   }, []);
 
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+  }, []);
+
   const startCamera = useCallback(async () => {
     try {
+      stopCamera(); // Ensure any previous stream is stopped
       setError(null);
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user' }, // Use front camera
         audio: false
       });
-      setStream(mediaStream);
+      
+      streamRef.current = mediaStream;
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
       }
@@ -47,14 +56,7 @@ const FaceCapture = ({ onCapture }) => {
       console.error("Error accessing camera:", err);
       setError("تعذر الوصول للكاميرا. يرجى التأكد من السماح بالوصول.");
     }
-  }, []);
-
-  const stopCamera = useCallback(() => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      setStream(null);
-    }
-  }, [stream]);
+  }, [stopCamera]);
 
   useEffect(() => {
     startCamera();
@@ -123,7 +125,10 @@ const FaceCapture = ({ onCapture }) => {
       
       const imageUrl = canvas.toDataURL('image/jpeg');
       setCapturedImage(imageUrl);
-      setIsCapturing(true); // Stop live feed essentially (though we just overlay image)
+      
+      // Trigger flash effect
+      setShowFlash(true);
+      setTimeout(() => setShowFlash(false), 300);
     }
   };
 
@@ -134,7 +139,6 @@ const FaceCapture = ({ onCapture }) => {
 
   const retakePhoto = () => {
     setCapturedImage(null);
-    setIsCapturing(false);
   };
 
   return (
@@ -228,7 +232,8 @@ const FaceCapture = ({ onCapture }) => {
             )}
             
             {/* Flash Effect */}
-            <div className={`absolute inset-0 bg-white pointer-events-none transition-opacity duration-300 ${isCapturing ? 'opacity-50' : 'opacity-0'}`} />
+            {/* Flash Effect */}
+            <div className={`absolute inset-0 bg-white pointer-events-none transition-opacity duration-300 z-50 ${showFlash ? 'opacity-100' : 'opacity-0'}`} />
         </div>
 
         {/* Controls */}
