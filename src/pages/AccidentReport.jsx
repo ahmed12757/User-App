@@ -5,10 +5,10 @@ import LocationCapture from '../components/LocationCapture';
 import CameraCapture from '../components/CameraCapture';
 import VoiceRecorder from '../components/VoiceRecorder';
 
-const AccidentReport = () => {
+const AccidentReport = ({ capturedFace }) => {
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState(null);
-  const [photo, setPhoto] = useState(null);
+  const [mediaFiles, setMediaFiles] = useState([]);
   const [voice, setVoice] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -19,7 +19,14 @@ const AccidentReport = () => {
 
     const formData = new FormData();
     if(location) formData.append('location', JSON.stringify(location));
-    if(photo) formData.append('photo', photo);
+    
+    // Append all media files
+    mediaFiles.forEach((file, index) => {
+        formData.append(`media_${index}`, file);
+    });
+
+    if (capturedFace) formData.append('face_capture', capturedFace);
+
     if(voice) formData.append('voice', voice);
     formData.append('description', description);
 
@@ -102,7 +109,7 @@ const AccidentReport = () => {
                          <span className="w-6 h-6 rounded-full bg-zinc-800 text-zinc-400 flex items-center justify-center text-xs">٢</span>
                         الصور والفيديو
                     </h2>
-                    <CameraCapture onFileSelected={setPhoto} />
+                    <CameraCapture onFileSelected={setMediaFiles} />
                 </section>
             </div>
 
@@ -142,7 +149,7 @@ const AccidentReport = () => {
                             </>
                         ) : (
                             <>
-                                <FaPaperPlane className="text-xl ml-2 group-hover:-translate-x-1 transition-transform" /> 
+                                <FaPaperPlane className="text-xl ml-2 group-hover:-translate-x-1 transition-transform " /> 
                                 إرسال البلاغ الآن
                             </>
                         )}
