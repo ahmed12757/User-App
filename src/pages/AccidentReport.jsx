@@ -18,6 +18,15 @@ const AccidentReport = ({ capturedFace }) => {
     setIsSubmitting(true);
 
     const formData = new FormData();
+    
+    // Append User Data
+    const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    if (user) {
+        formData.append('reporter_name', user.fullName || '');
+        formData.append('reporter_nationalId', user.nationalId || '');
+        formData.append('reporter_phone', user.phone || '');
+        formData.append('reporter_email', user.email || '');
+    }
     if(location) formData.append('location', JSON.stringify(location));
     
     // Append all media files
